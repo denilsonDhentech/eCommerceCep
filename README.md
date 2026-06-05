@@ -1,4 +1,4 @@
-# 🚚 Logistics Route Validator (Desafio NAVA)
+# 🚚 Logistics Route Validator
 
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.14-brightgreen.svg)
