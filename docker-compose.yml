@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: logistics_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  wiremock:
+    image: wiremock/wiremock:latest
+    container_name: wiremock_svc
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack_svc
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns,lambda
+      - DEFAULT_REGION=sa-east-1
