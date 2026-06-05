@@ -1,4 +1,4 @@
-package com.dhentech.eCommerceCep.infrastructure.client.dto;
+package com.dhentech.ecommercezipcode.infrastructure.client.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
