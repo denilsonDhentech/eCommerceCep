@@ -1,6 +1,6 @@
-package com.dhentech.eCommerceCep.infrastructure.client;
+package com.dhentech.ecommercezipcode.infrastructure.client;
 
-import com.dhentech.eCommerceCep.infrastructure.client.dto.ViaCepResponse;
+import com.dhentech.ecommercezipcode.infrastructure.client.dto.ViaCepResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

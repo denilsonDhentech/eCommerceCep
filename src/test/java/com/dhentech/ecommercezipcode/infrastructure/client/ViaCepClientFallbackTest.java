@@ -1,6 +1,6 @@
-package com.dhentech.eCommerceCep.infrastructure.client;
+package com.dhentech.ecommercezipcode.infrastructure.client;
 
-import com.dhentech.eCommerceCep.infrastructure.client.dto.ViaCepResponse;
+import com.dhentech.ecommercezipcode.infrastructure.client.dto.ViaCepResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
