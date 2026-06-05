@@ -1,4 +1,9 @@
 spring:
+  spring:
+    cloud:
+      openfeign:
+        circuitbreaker:
+          enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/logistics_db
     username: postgres
