@@ -1,9 +1,11 @@
+server:
+  port: 8081
+
 spring:
-  spring:
-    cloud:
-      openfeign:
-        circuitbreaker:
-          enabled: true
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/logistics_db
     username: postgres
@@ -11,10 +13,9 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update # O Hibernate criará a tabela para você na inicialização
+      ddl-auto: update
     show-sql: true
 
-# Configuração da nossa API Externa (Wiremock)
 logistics:
   viacep:
     url: http://localhost:8080
