@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/ws/.*"
+  },
+  "response": {
+    "status": 200,
+    "transformers": ["response-template"],
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"cep\": \"{{request.pathSegments.[1]}}\", \"logradouro\": \"Rua do Teste Automatizado\", \"bairro\": \"Bairro Teste\", \"localidade\": \"São Paulo\", \"uf\": \"SP\"}"
+  }
+}
