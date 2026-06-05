@@ -7,6 +7,7 @@ import com.dhentech.ecommercezipcode.infrastructure.client.ViaCepClient;
 import com.dhentech.ecommercezipcode.infrastructure.client.dto.ViaCepResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,11 +15,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,7 +29,7 @@ class RouteValidationUseCaseTest {
     private ViaCepClient viaCepClient;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private SqsTemplate sqsTemplate;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -37,7 +38,7 @@ class RouteValidationUseCaseTest {
     private RouteValidationUseCase useCase;
 
     @Test
-    @DisplayName("Should return available route details and publish event on successful API call")
+    @DisplayName("Should return available route details and send message to SQS on successful API call")
     void shouldReturnAvailableRouteAndPublishEvent() throws JsonProcessingException {
         String zipCode = "01001000";
         ViaCepResponse mockResponse = new ViaCepResponse(
@@ -54,11 +55,11 @@ class RouteValidationUseCaseTest {
         assertEquals("São Paulo", result.city());
         assertEquals("Available", result.deliveryStatus());
 
-        verify(eventPublisher, times(1)).publishEvent(any(ConsultationEvent.class));
+        verify(sqsTemplate, times(1)).send(eq("consultation-log-queue"), any(ConsultationEvent.class));
     }
 
     @Test
-    @DisplayName("Should return unavailable route details when API fallback is triggered")
+    @DisplayName("Should return unavailable route details when API fallback is triggered and send to SQS")
     void shouldReturnUnavailableRouteOnApiFallback() throws JsonProcessingException {
         String zipCode = "01001000";
         ViaCepResponse fallbackResponse = new ViaCepResponse(
@@ -75,7 +76,7 @@ class RouteValidationUseCaseTest {
         assertEquals("Indisponível", result.city());
 
         ArgumentCaptor<ConsultationEvent> eventCaptor = ArgumentCaptor.forClass(ConsultationEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        verify(sqsTemplate).send(eq("consultation-log-queue"), eventCaptor.capture());
 
         ConsultationEvent publishedEvent = eventCaptor.getValue();
         assertEquals(zipCode, publishedEvent.zipCode());

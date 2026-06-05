@@ -20,10 +20,12 @@ services:
       - ./wiremock:/home/wiremock
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8.0
     container_name: localstack_svc
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,sns,lambda
-      - DEFAULT_REGION=sa-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test

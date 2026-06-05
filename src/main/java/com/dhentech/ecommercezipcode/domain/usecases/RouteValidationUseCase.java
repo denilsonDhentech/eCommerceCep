@@ -6,7 +6,7 @@ import com.dhentech.ecommercezipcode.infrastructure.client.ViaCepClient;
 import com.dhentech.ecommercezipcode.infrastructure.client.dto.ViaCepResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.ApplicationEventPublisher;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,15 +15,15 @@ import java.time.LocalDateTime;
 public class RouteValidationUseCase {
 
     private final ViaCepClient viaCepClient;
-    private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
+    private final SqsTemplate sqsTemplate;
 
     public RouteValidationUseCase(ViaCepClient viaCepClient,
-                                  ApplicationEventPublisher eventPublisher,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  SqsTemplate sqsTemplate) {
         this.viaCepClient = viaCepClient;
-        this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
+        this.sqsTemplate = sqsTemplate;
     }
 
     public RouteDetails execute(String zipCode) {
@@ -53,7 +53,7 @@ public class RouteValidationUseCase {
             String payload = objectMapper.writeValueAsString(response);
             ConsultationEvent event = new ConsultationEvent(zipCode, payload, LocalDateTime.now());
 
-            eventPublisher.publishEvent(event);
+            sqsTemplate.send("consultation-log-queue", event);
 
         } catch (JsonProcessingException e) {
             System.err.println("Failed to serialize response payload for logging.");

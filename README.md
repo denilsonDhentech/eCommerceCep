@@ -16,6 +16,7 @@ Para fins de auditoria e análise de malha, **todas as consultas são registrada
 - **Resiliência (Circuit Breaker):** Implementação de Fallback utilizando **Resilience4j**. Caso a API externa falhe ou fique indisponível, o sistema não quebra (evitando erro 500) e retorna um status de contingência.
 - **Alta Performance (Async Logging):** O salvamento dos logs no banco de dados é feito em background utilizando `Spring Application Events` e `@Async`.
 - **Tratamento de Erros Padronizado:** Validação rigorosa de inputs com respostas baseadas na RFC 7807 (Problem Details).
+- **Cloud Native & Mensageria (AWS SQS):** Evolução do processamento assíncrono para uma arquitetura baseada em eventos escalável. Utilização do **LocalStack** para simular o ambiente AWS localmente, publicando e consumindo logs de consulta via fila SQS (`consultation-log-queue`).
 
 ## 🛠️ Tecnologias Utilizadas
 - **Linguagem:** Java 17
@@ -79,12 +80,46 @@ curl -X GET http://localhost:8081/api/v1/deliveries/routes/01001000
 }
 ```
 
+### 1.1 Simulação de Cenários (WireMock Stubs)
+Para validar o comportamento do sistema sem depender da estabilidade da API real da ViaCep, utilizamos o **WireMock**. Você pode injetar cenários de erro via API administrativa (porta `8080`) através do Insomnia ou Postman:
+
+**Exemplo: Simular Erro 500 (API Instável):**
+1. Crie um **POST** para: `http://localhost:8080/__admin/mappings`
+2. No corpo (**Body**), envie este JSON:
+```json
+{
+  "request": { "method": "GET", "urlPathPattern": "/ws/.*" },
+  "response": { "status": 500 }
+}
+```
+*Após o envio, a próxima consulta disparará o Circuit Breaker e retornará o Fallback de contingência.*
+
+**Para restaurar o funcionamento normal:**
+1. Crie um **POST** para: `http://localhost:8080/__admin/mappings/reset`
+2. Envie com o corpo vazio.
+
+### 1.2 Dica: Stub Genérico (Opcional)
+Se desejar que o WireMock sempre responda com dados simulados para qualquer CEP, sem precisar configurar cada um individualmente, você pode adicionar este arquivo em `wiremock/mappings/stub-generico.json`:
+
+**(arquivo de exemplo se encontra em stubs-library/stub-generico.json)**
+```json
+{
+   "request": { "method": "GET", "urlPathPattern": "/ws/.*" },
+   "response": {
+      "status": 200,
+      "transformers": ["response-template"],
+      "headers": { "Content-Type": "application/json" },
+      "body": "{\"cep\": \"{{request.pathSegments.[1]}}\", \"logradouro\": \"Rua do Teste Automatizado\", \"bairro\": \"Bairro Teste\", \"localidade\": \"São Paulo\", \"uf\": \"SP\"}"
+   }
+}
+```
+
 ### 2. Validação de Input (Bad Request)
 Tentar enviar um CEP com formato inválido (ex: com letras ou tamanho incorreto).
 
 **Requisição:**
 ```bash
-curl -X GET http://localhost:8081/api/v1/deliveries/routes/12345
+curl -X GET http://localhost:8081/api/v1/deliveries/routes/01311200
 ```
 
 **Resposta (400 Bad Request - RFC 7807):**
@@ -118,6 +153,27 @@ Ao realizar a consulta novamente, a aplicação não retornará erro, mas sim o 
 }
 ```
 
+## ☁️ Simulação de Nuvem AWS (LocalStack)
+
+Para demonstrar proficiência em arquiteturas orientadas a eventos para cenários de altíssimo volume, este projeto utiliza o **LocalStack** para emular o serviço **AWS SQS (Simple Queue Service)** localmente na porta `4566`.
+
+### Como a Mensageria Funciona:
+1. Ao consultar um CEP válido, o `RouteValidationUseCase` envia instantaneamente um payload JSON para a fila SQS.
+2. A biblioteca `Spring Cloud AWS (awspring)` gerencia a conexão. Caso a fila não exista na inicialização, ela é provisionada automaticamente.
+3. O `ConsultationSqsListener` escuta a fila em background. Ao detectar a mensagem, realiza o *dequeue* e a persiste de forma segura no PostgreSQL.
+
+### Comprovando o Fluxo de Eventos:
+Ao realizar uma requisição via Insomnia ou `curl`, observe o console da aplicação (Spring Boot). Você verá o exato momento em que o "Worker" da AWS captura e processa a mensagem de forma desacoplada:
+
+```text
+INFO  ... : Received message from SQS Queue for Zip Code: 01001000
+INFO  ... : Log successfully saved to the database via SQS worker.
+```
+
+Para visualizar a atividade interna da AWS (Criação da Fila, Envio e Deleção da Mensagem), você pode checar os logs do container do LocalStack executando:
+```bash
+docker logs localstack_svc
+```
 ---
 
 ## ⚙️ Cobertura de Testes Automatizados

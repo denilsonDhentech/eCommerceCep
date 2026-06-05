@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/ws/88888888/json/"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 5000,
+    "body": "{\"cep\": \"88888-888\", \"logradouro\": \"Rua Lenta\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

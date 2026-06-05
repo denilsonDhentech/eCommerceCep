@@ -6,6 +6,14 @@ spring:
     openfeign:
       circuitbreaker:
         enabled: true
+    aws:
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: us-east-1
+      sqs:
+        endpoint: http://localhost:4566
   datasource:
     url: jdbc:postgresql://localhost:5432/logistics_db
     username: postgres
